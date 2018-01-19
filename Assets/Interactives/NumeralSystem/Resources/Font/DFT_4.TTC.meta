@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: b8ff1d3338ddd1b47bcff78e792ce7c2
+timeCreated: 1516245901
+licenseType: Pro
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: DFLiHei-Bd
+  fontNames:
+  - DFLiHei-Bd
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
