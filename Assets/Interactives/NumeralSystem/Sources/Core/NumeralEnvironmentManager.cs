@@ -47,8 +47,7 @@ namespace NumeralSystem
                 {
                     yield return pinballMgr.MoveToTop();
                     pinballMgr.MergeToOnePinball(pinballSpritePaths[i - 1]);
-                    yield return pinballMgr.DoCarry(_allPinballManagers[i - 1]);
-                    //pinballMgr.ResetNextPinballPosition();
+                    yield return pinballMgr.DoCarry(_allPinballManagers[i - 1], i == 0);
                 }
             }
             Logger.Print("Playing done.");

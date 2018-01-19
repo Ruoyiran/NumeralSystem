@@ -240,30 +240,35 @@ namespace NumeralSystem
             GameObjectUtils.SetImageSprite(onePinballObj.gameObject, spritePath);
         }
 
-        public IEnumerator DoCarry(PinballManager nextPinballMgr)
+        public IEnumerator DoCarry(PinballManager nextPinballMgr, bool hasNext)
         {
             int carry = GetCarryCount();
+            PinballObject carryPinballObj = null;
             if (carry > 0 && _pinballObjs.Count > 0)
             {
                 _curPinballCount -= carry * _numBits;
+                for (int i = 0; i < _curPinballCount; i++)
+                {
+                    PinballObject pinballObj = _pinballObjs[i];
+                    pinballObj.Reset(topPinballObj.transform.localPosition, 1.0f);
+                }
                 nextPinballMgr.CurPinballCount += carry;
-                PinballObject onePinballObj = _pinballObjs[_pinballObjs.Count - 1];
+                carryPinballObj = _pinballObjs[_pinballObjs.Count - 1];
                 // 进位，弹珠向左移动
-                onePinballObj.MoveTo(nextPinballMgr.topPinballObj.transform.position, _pinballMovingSpeed, false);
-                while (!onePinballObj.IsStatic)
+                carryPinballObj.MoveTo(nextPinballMgr.topPinballObj.transform.position, _pinballMovingSpeed, false);
+                while (!carryPinballObj.IsStatic)
                 {
                     yield return null;
                 }
-                onePinballObj.transform.SetParent(nextPinballMgr.transform);
+                carryPinballObj.transform.SetParent(nextPinballMgr.transform);
                 RemovePinballObject(_pinballObjs.Count - 1);
-                nextPinballMgr.InsertPinballObject(_pinballObjs.Count, onePinballObj);
-                if (carry > 0 && !nextPinballMgr.CanCarry)
-                    GameObjectUtils.SetActive(onePinballObj.gameObject, false);
+                nextPinballMgr.InsertPinballObject(_pinballObjs.Count, carryPinballObj);
+                if (carry > 0 && !nextPinballMgr.CanCarry && hasNext)
+                    GameObjectUtils.SetActive(carryPinballObj.gameObject, false);
             }
             for (int i = 0; i < _curPinballCount; i++) // 剩余弹珠下落到底部
             {
                 PinballObject pinballObj = _pinballObjs[i];
-                pinballObj.Reset(topPinballObj.transform.localPosition, 1.0f);
                 pinballObj.MoveTo(_allAvailablePositions[i], _pinballMovingSpeed);
                 while (!pinballObj.IsStatic)
                     yield return null;
@@ -272,6 +277,7 @@ namespace NumeralSystem
             if (carry > 0 && !nextPinballMgr.CanCarry) // 进位弹珠下落到底部
             {
                 Logger.Print("Falling down.");
+                GameObjectUtils.SetActive(carryPinballObj.gameObject, false);
                 PinballObject pinballObj = nextPinballMgr.PinballFallingDown();
                 while (pinballObj != null && !pinballObj.IsStatic)
                     yield return null;
@@ -285,12 +291,5 @@ namespace NumeralSystem
             int carry = _curPinballCount / _numBits;
             return carry;
         }
-
-        public void ResetNextPinballPosition()
-        {
-            _nextPinballPosition = _curPinballCount;
-            Logger.Print("ResetNextAvaiablePosition - next avaiable position: {0}", _nextPinballPosition);
-        }
-
     }
 }
