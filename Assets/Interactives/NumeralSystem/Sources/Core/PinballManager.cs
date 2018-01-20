@@ -64,8 +64,8 @@ namespace NumeralSystem
         private void Awake()
         {
             _nextPinballPosition = 0;
-            GameObjectUtils.SetActive(topPinballObj, false);
-            GameObjectUtils.SetActive(bottomPinballObj, false);
+            GameObjectUtils.SetVisible(topPinballObj, false);
+            GameObjectUtils.SetVisible(bottomPinballObj, false);
             GameObjectUtils.SetImageColor(topPinballObj, new Color(1.0f, 1.0f, 1.0f, kColorAlpha));
         }
 
@@ -99,13 +99,13 @@ namespace NumeralSystem
                 return;
             if (!_showTopObj)
             {
-                GameObjectUtils.SetActive(topPinballObj, false);
+                GameObjectUtils.SetVisible(topPinballObj, false);
                 return;
             }
 
             bool isStatic = true;
             if (_curPinballCount == 0)
-                GameObjectUtils.SetActive(topPinballObj, true);
+                GameObjectUtils.SetVisible(topPinballObj, true);
             else
             {
                 for (int i = 0; i < _pinballObjs.Count; i++)
@@ -118,7 +118,7 @@ namespace NumeralSystem
                 }
             }
             bool active = isStatic && (_curPinballCount < _numBits);
-            GameObjectUtils.SetActive(topPinballObj, active);
+            GameObjectUtils.SetVisible(topPinballObj, active);
         }
 
         public void SetImageSprite(string path)
@@ -132,12 +132,12 @@ namespace NumeralSystem
             _curPinballCount = 0;
             _nextPinballPosition = 0;
             _showTopObj = showTopPinball;
-            GameObjectUtils.SetActive(topPinballObj, showTopPinball);
+            GameObjectUtils.SetVisible(topPinballObj, showTopPinball);
             GameObjectUtils.SetImageSprite(topPinballObj, _spritePath);
             for (int i = 0; i < _pinballObjs.Count; i++)
             {
                 GameObjectUtils.SetImageSprite(_pinballObjs[i].gameObject, _spritePath);
-                GameObjectUtils.SetActive(_pinballObjs[i].gameObject, false);
+                GameObjectUtils.SetVisible(_pinballObjs[i].gameObject, false);
             }
         }
 
@@ -234,7 +234,7 @@ namespace NumeralSystem
                 return;
             for (int i = 0; i < _pinballObjs.Count-1; ++i)
             {
-                GameObjectUtils.SetActive(_pinballObjs[i].gameObject, false);
+                GameObjectUtils.SetVisible(_pinballObjs[i].gameObject, false);
             }
             PinballObject onePinballObj = _pinballObjs[_pinballObjs.Count - 1];
             GameObjectUtils.SetImageSprite(onePinballObj.gameObject, spritePath);
@@ -255,6 +255,7 @@ namespace NumeralSystem
                 nextPinballMgr.CurPinballCount += carry;
                 carryPinballObj = _pinballObjs[_pinballObjs.Count - 1];
                 // 进位，弹珠向左移动
+                GameObjectUtils.SetVisible(carryPinballObj.gameObject, true);
                 carryPinballObj.MoveTo(nextPinballMgr.topPinballObj.transform.position, _pinballMovingSpeed, false);
                 while (!carryPinballObj.IsStatic)
                 {
@@ -264,7 +265,7 @@ namespace NumeralSystem
                 RemovePinballObject(_pinballObjs.Count - 1);
                 nextPinballMgr.InsertPinballObject(_pinballObjs.Count, carryPinballObj);
                 if (carry > 0 && !nextPinballMgr.CanCarry && hasNext)
-                    GameObjectUtils.SetActive(carryPinballObj.gameObject, false);
+                    GameObjectUtils.SetVisible(carryPinballObj.gameObject, false);
             }
             for (int i = 0; i < _curPinballCount; i++) // 剩余弹珠下落到底部
             {
@@ -277,7 +278,7 @@ namespace NumeralSystem
             if (carry > 0 && !nextPinballMgr.CanCarry) // 进位弹珠下落到底部
             {
                 Logger.Print("Falling down.");
-                GameObjectUtils.SetActive(carryPinballObj.gameObject, false);
+                GameObjectUtils.SetVisible(carryPinballObj.gameObject, false);
                 PinballObject pinballObj = nextPinballMgr.PinballFallingDown();
                 while (pinballObj != null && !pinballObj.IsStatic)
                     yield return null;

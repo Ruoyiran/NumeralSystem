@@ -34,7 +34,7 @@ namespace NumeralSystem
             _targetPosition = position;
             transform.localPosition = position;
             GameObjectUtils.SetImageColor(gameObject, new Color(1.0f, 1.0f, 1.0f, colorAlpha));
-            GameObjectUtils.SetActive(gameObject, true);
+            GameObjectUtils.SetVisible(gameObject, true);
         }
 
         public float MoveTo(Vector3 targetPos, float speed, bool isLocal = true)

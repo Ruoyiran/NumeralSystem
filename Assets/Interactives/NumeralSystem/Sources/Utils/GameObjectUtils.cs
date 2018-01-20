@@ -75,7 +75,7 @@ namespace NumeralSystem.Utils
             iTween.MoveTo(go, args);
         }
 
-        public static void SetActive(GameObject obj, bool active)
+        public static void SetVisible(GameObject obj, bool active)
         {
             if (obj == null)
                 return;
