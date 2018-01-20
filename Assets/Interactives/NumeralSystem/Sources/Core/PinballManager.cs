@@ -60,6 +60,7 @@ namespace NumeralSystem
         private int _curPinballCount;
         private string _spritePath;
         private bool _showTopObj = true;
+        private int _selfBit;
 
         private void Awake()
         {
@@ -130,7 +131,6 @@ namespace NumeralSystem
 
         public void SetTopPinballVisible(bool visible)
         {
-            Logger.Print("SetTopPinballVisible - visible: {0}, name: {1}", visible, topPinballObj.name);
             GameObjectUtils.SetVisible(topPinballObj, visible);
         }
 
@@ -142,12 +142,13 @@ namespace NumeralSystem
             }
         }
 
-        public void Reset(int numBits, bool showTopPinball)
+        public void Reset(int numBits, int selfBit, bool showTopPinball)
         {
             _numBits = Math.Min(numBits, NumericInputManager.kMaxNumberBit);
             _curPinballCount = 0;
             _nextPinballPosition = 0;
             _showTopObj = showTopPinball;
+            _selfBit = selfBit;
             GameObjectUtils.SetVisible(topPinballObj, showTopPinball);
             GameObjectUtils.SetImageSprite(topPinballObj, _spritePath);
             for (int i = 0; i < _pinballObjs.Count; i++)
@@ -210,6 +211,11 @@ namespace NumeralSystem
                 return;
             pinballObj.Reset(topPinballObj.transform.localPosition, 1.0f);
             pinballObj.MoveTo(_allAvailablePositions[_nextPinballPosition], _pinballMovingSpeed, true);
+            int nextValue = NumeralEnvironmentManager.Instance.CurrentNumberValue + (int)Mathf.Pow(_numBits, _selfBit);
+            if (nextValue >= NumeralEnvironmentManager.Instance.NumberMaxValue)
+            {
+                Messenger.Broadcast(MessageConstant.MSG_NUMERIC_GAME_OVER);
+            }
             _curPinballCount += 1;
             _nextPinballPosition += 1;
         }

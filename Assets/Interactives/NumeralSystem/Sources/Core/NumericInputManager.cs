@@ -131,7 +131,6 @@ namespace NumeralSystem
 
         public void Clear()
         {
-            print("Clear!!!!!!!!!");
             OnClearButtonClicked();
         }
 

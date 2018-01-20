@@ -21,8 +21,8 @@ namespace NumeralSystem
         private void OnOkButtonClicked()
         {
             gameObject.SetActive(false);
-            if (NumericInputManager.Instance != null)
-                NumericInputManager.Instance.Clear();
+            if (NumeralEnvironmentManager.Instance != null)
+                NumeralEnvironmentManager.Instance.Restart();
         }
     }
 }
