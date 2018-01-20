@@ -42,7 +42,6 @@ namespace NumeralSystem
             Messenger.RemoveListener(MessageConstant.MSG_NUMERIC_INPUT_CLEAR, OnNumericClearHandler);
         }
 
-
         private void Update()
         {
             PinballManager.IsDisableTouch = _isPlayingAnimation; // 正在播放进位动画时不能点击弹珠
@@ -77,8 +76,7 @@ namespace NumeralSystem
             if (isGameOver)
             {
                 Logger.Print("Game Over!");
-                OnNumericClearHandler();
-                StartCoroutine(Reset(NumericInputManager.Instance.PrevInputNumber));
+                State = GameState.GameOver;
                 Messenger.Broadcast(MessageConstant.MSG_NUMERIC_GAME_OVER);
             }
         }

@@ -25,6 +25,7 @@ namespace NumeralSystem
         public Text textNumericType;
         public Toggle toggleOne;
         public Toggle toggleTwo;
+
         public Toggle toggleThree;
         public Toggle toggleFour;
         public Toggle toggleFive;
@@ -56,6 +57,11 @@ namespace NumeralSystem
             SetNumberText("");
             CheckOkButtonInteractable();
             AddAllButtonsClickedListener();
+        }
+
+        private void OnNumericClearHandler()
+        {
+            OnClearButtonClicked();
         }
 
         private void InitToggleList()
@@ -121,6 +127,12 @@ namespace NumeralSystem
             CheckOkButtonInteractable();
             SetNumberText(NumericConfig.GetChineseNumber(_inputNumber));
             Messenger.Broadcast<int>(MessageConstant.MSG_NUMERIC_INPUT_OK, _inputNumber);
+        }
+
+        public void Clear()
+        {
+            print("Clear!!!!!!!!!");
+            OnClearButtonClicked();
         }
 
         private void OnClearButtonClicked()

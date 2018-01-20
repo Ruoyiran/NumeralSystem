@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Interactives\NumeralSystem\Plugins\iTween\iTween.cs" />
+     <Compile Include="Assets\Interactives\NumeralSystem\Sources\Core\GameOverTips.cs" />
      <Compile Include="Assets\Interactives\NumeralSystem\Sources\Core\MessageConstant.cs" />
      <Compile Include="Assets\Interactives\NumeralSystem\Sources\Core\NumeralEnvironmentManager.cs" />
      <Compile Include="Assets\Interactives\NumeralSystem\Sources\Core\NumeralSystemManager.cs" />
