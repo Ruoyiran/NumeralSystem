@@ -211,11 +211,6 @@ namespace NumeralSystem
                 return;
             pinballObj.Reset(topPinballObj.transform.localPosition, 1.0f);
             pinballObj.MoveTo(_allAvailablePositions[_nextPinballPosition], _pinballMovingSpeed, true);
-            int nextValue = NumeralEnvironmentManager.Instance.CurrentNumberValue + (int)Mathf.Pow(_numBits, _selfBit);
-            if (nextValue >= NumeralEnvironmentManager.Instance.NumberMaxValue)
-            {
-                Messenger.Broadcast(MessageConstant.MSG_NUMERIC_GAME_OVER);
-            }
             _curPinballCount += 1;
             _nextPinballPosition += 1;
         }

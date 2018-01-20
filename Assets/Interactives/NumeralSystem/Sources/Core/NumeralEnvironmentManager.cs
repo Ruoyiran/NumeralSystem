@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
-using NumeralSystem.Utils;
 using System.Collections.Generic;
 using System.Collections;
-using System;
+using NumeralSystem.Utils;
 
 namespace NumeralSystem
 {
@@ -23,24 +22,6 @@ namespace NumeralSystem
                 return _instance;
             }
         }
-
-        public int NumberMaxValue
-        {
-            get
-            {
-                return _maxValue;
-            }
-        }
-
-        public int CurrentNumberValue
-        {
-            get
-            {
-                int value = CalcCurrentNumberValue();
-                return value;
-            }
-        }
-
         private static NumeralEnvironmentManager _instance;
         private int _numDigits = 5;    // 演示的位数
         private List<PinballManager> _allPinballManagers;
@@ -76,9 +57,10 @@ namespace NumeralSystem
 
         private void Update()
         {
-            PinballManager.IsDisableTouch = _isPlayingAnimation; // 正在播放进位动画时不能点击弹珠
-            if (_isPlayingAnimation || State != GameState.Playing)
+            PinballManager.IsDisableTouch = _isPlayingAnimation || State != GameState.Playing;
+            if (_isPlayingAnimation || State != GameState.Playing) {
                 return;
+            }
             bool isStatic = CheckAllPinballsStaticState(); // 所有弹珠都处于静止状态
             if (!isStatic) // 有正在下落的弹珠，等待下落结束
                 return;
@@ -104,7 +86,6 @@ namespace NumeralSystem
             }
             _isPlayingAnimation = false;
             bool isGameOver = CheckGameOver();
-
             if (isGameOver)
             {
                 Logger.Print("Game Over!");
@@ -115,20 +96,8 @@ namespace NumeralSystem
 
         private bool CheckGameOver()
         {
-            if (_allPinballManagers == null || _allPinballManagers.Count == 0)
-                return true;
-            if (_allPinballManagers[0].CurPinballCount > NumericInputManager.Instance.PrevInputNumber)
-                return true;
-            bool isGameOver = true;
-            for (int i = 0; i < _allPinballManagers.Count; i++)
-            {
-                if(_allPinballManagers[i].CurPinballCount < NumericInputManager.Instance.PrevInputNumber)
-                {
-                    isGameOver = false;
-                    break;
-                }
-            }
-            return isGameOver;
+            int curValue = CalcCurrentNumberValue();
+            return CalcCurrentNumberValue() >= _maxValue;
         }
 
         private void InitEnvironment()
