@@ -53,7 +53,7 @@ namespace NumeralSystem
         private List<Vector3> _allAvailablePositions;
 
         private const float kColorAlpha = 0.3f;     // 弹珠初始透明度
-        private float _pinballMovingSpeed = 20f;    // 弹珠下落速度
+        private float _pinballMovingSpeed = 40f;    // 弹珠下落速度
         private int _pinballIntervalY = 30;         // 每个弹珠的垂直间距
         private int _nextPinballPosition = 0;
         private int _numBits;
@@ -81,7 +81,7 @@ namespace NumeralSystem
             if (bottomPinballObj == null)
                 return;
             Vector3 startPos = bottomPinballObj.transform.localPosition;
-            for (int i = 0; i < NumericInputManager.kMaxNumberBit; i++)
+            for (int i = 0; i < NumericInputManager.kMaxNumberBit+1; i++)
             {
                 _allAvailablePositions.Add(startPos);
                 startPos += new Vector3(0, _pinballIntervalY, 0);
@@ -90,6 +90,8 @@ namespace NumeralSystem
 
         private void FixedUpdate()
         {
+            if (NumeralEnvironmentManager.State != GameState.Playing)
+                return;
             CheckTopPinballVisibleState();
         }
 
@@ -124,6 +126,20 @@ namespace NumeralSystem
         public void SetImageSprite(string path)
         {
             _spritePath = path;
+        }
+
+        public void SetTopPinballVisible(bool visible)
+        {
+            Logger.Print("SetTopPinballVisible - visible: {0}, name: {1}", visible, topPinballObj.name);
+            GameObjectUtils.SetVisible(topPinballObj, visible);
+        }
+
+        public void HideAllPinballs()
+        {
+            for (int i = 0; i < _pinballObjs.Count; i++)
+            {
+                GameObjectUtils.SetVisible(_pinballObjs[i].gameObject, false);
+            }
         }
 
         public void Reset(int numBits, bool showTopPinball)
@@ -180,15 +196,6 @@ namespace NumeralSystem
                 Logger.Print("OnTopPinballTouchDown - touch disabled.");
                 return;
             }
-            PinballFallingDown();
-            _curPinballCount += 1;
-        }
-
-        public PinballObject PinballFallingDown()
-        {
-            Logger.Print("PinballFallingDown - _nextPinballPosition: {0}, _curPinballCount: {1}", _nextPinballPosition, _curPinballCount);
-            if (_nextPinballPosition >= _numBits)
-                return null;
             PinballObject pinballObj = null;
             if (_pinballObjs.Count > _nextPinballPosition)
                 pinballObj = _pinballObjs[_nextPinballPosition];
@@ -200,11 +207,20 @@ namespace NumeralSystem
                     _pinballObjs.Add(pinballObj);
             }
             if (pinballObj == null)
-                return null;
+                return;
             pinballObj.Reset(topPinballObj.transform.localPosition, 1.0f);
             pinballObj.MoveTo(_allAvailablePositions[_nextPinballPosition], _pinballMovingSpeed, true);
+            _curPinballCount += 1;
             _nextPinballPosition += 1;
-            return pinballObj;
+        }
+
+        public Vector3 MoveToNextAvaiablePostion()
+        {
+            if (_nextPinballPosition >= _allAvailablePositions.Count)
+                _nextPinballPosition = _allAvailablePositions.Count - 1;
+            Vector3 pos = _allAvailablePositions[_nextPinballPosition];
+            _nextPinballPosition += 1;
+            return pos;
         }
 
         public IEnumerator MoveToTop()
@@ -264,8 +280,8 @@ namespace NumeralSystem
                 carryPinballObj.transform.SetParent(nextPinballMgr.transform);
                 RemovePinballObject(_pinballObjs.Count - 1);
                 nextPinballMgr.InsertPinballObject(_pinballObjs.Count, carryPinballObj);
-                if (carry > 0 && !nextPinballMgr.CanCarry && hasNext)
-                    GameObjectUtils.SetVisible(carryPinballObj.gameObject, false);
+                //if (carry > 0 && !nextPinballMgr.CanCarry && hasNext)
+                //    GameObjectUtils.SetVisible(carryPinballObj.gameObject, false);
             }
             for (int i = 0; i < _curPinballCount; i++) // 剩余弹珠下落到底部
             {
@@ -275,12 +291,13 @@ namespace NumeralSystem
                     yield return null;
             }
             _nextPinballPosition = _curPinballCount;
-            if (carry > 0 && !nextPinballMgr.CanCarry) // 进位弹珠下落到底部
+            if (carry > 0) // 进位弹珠下落到底部
             {
-                Logger.Print("Falling down.");
-                GameObjectUtils.SetVisible(carryPinballObj.gameObject, false);
-                PinballObject pinballObj = nextPinballMgr.PinballFallingDown();
-                while (pinballObj != null && !pinballObj.IsStatic)
+                //Logger.Print("Falling down. scale " + carryPinballObj.transform.localScale);
+                //GameObjectUtils.SetVisible(carryPinballObj.gameObject, true);
+                Vector3 targetPos = nextPinballMgr.MoveToNextAvaiablePostion();
+                carryPinballObj.MoveTo(targetPos, _pinballMovingSpeed, true);
+                while (!carryPinballObj.IsStatic)
                     yield return null;
             }
         }

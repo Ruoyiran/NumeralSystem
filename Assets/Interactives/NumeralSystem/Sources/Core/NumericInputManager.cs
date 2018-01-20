@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -32,17 +33,18 @@ namespace NumeralSystem
         public Toggle toggleEight;
         public Toggle toggleNine;
         public Toggle toggleZero;
-        public Button btnDel;
+        public Button btnClear;
         public Button btnOk;
         public const int kMaxNumberBit = 16; // 最大计算的进制数位
         private int _inputNumber; // 当前输入的数字
         private int _prevInputNumber; // 点击确定按钮后保存的输入数值
         private static NumericInputManager _instance;
         private List<Toggle> _allToggles;
+        private HashSet<int> _inputNumberSet;
         private void Awake()
         {
             _instance = this;
-
+            _inputNumberSet = new HashSet<int>();
         }
 
         private void Start()
@@ -65,7 +67,7 @@ namespace NumeralSystem
         private void AddAllButtonsClickedListener()
         {
             AddAllNumericTogglesClickedListener();
-            AddButtonClickedListener(btnDel, OnDelButtonClicked);
+            AddButtonClickedListener(btnClear, OnClearButtonClicked);
             AddButtonClickedListener(btnOk, OnOkButtonClicked);
         }
 
@@ -85,7 +87,6 @@ namespace NumeralSystem
 
         private void AddAllNumericTogglesClickedListener()
         {
-
             for (int i = 0; i < _allToggles.Count; i++)
             {
                 int num = i;
@@ -100,55 +101,17 @@ namespace NumeralSystem
         private void OnNumericToggleClicked(int num, Toggle toggle)
         {
             Logger.Print("OnNumericToggleClicked - name: {0}, num: {1}", toggle.name, num);
-            if(toggle.isOn && _inputNumber == 0 && num == 0)
-            {
-                toggle.isOn = false;
-                return;
-            }
-            CheckInput(num, toggle);
-            SetNumberText(NumericConfig.GetChineseNumber(_inputNumber));
-            CheckOkButtonInteractable();
-        }
-
-        private void CheckInput(int num, Toggle toggle)
-        {
             if (toggle.isOn)
             {
-                int curInputNumber = _inputNumber * 10 + num;
-                if (curInputNumber <= kMaxNumberBit)
-                {
-                    _inputNumber = curInputNumber;
-                }
-                else
-                {
-                    toggle.isOn = false;
-                }
+                _inputNumberSet.Add(num);
             }
             else
             {
-                string tenPlace = "";
-                string singlePlace = "";
-                if (_inputNumber < 10)
-                    singlePlace = _inputNumber.ToString();
-                else
-                {
-                    singlePlace = (_inputNumber % 10).ToString();
-                    tenPlace = (_inputNumber / 10).ToString();
-                }
-                if (num.ToString() == tenPlace)
-                {
-                    tenPlace = "";
-                }
-                else if (num.ToString() == singlePlace)
-                {
-                    singlePlace = "";
-                }
-                string newValue = tenPlace + singlePlace;
-                if (newValue == "")
-                    _inputNumber = 0;
-                else
-                    _inputNumber = int.Parse(tenPlace + singlePlace);
+                if (_inputNumberSet.Contains(num))
+                    _inputNumberSet.Remove(num);
             }
+            CheckInput();
+            CheckOkButtonInteractable();
         }
 
         private void OnOkButtonClicked()
@@ -156,27 +119,28 @@ namespace NumeralSystem
             Logger.Print("OnOkButtonClicked - _inputNumber: {0}", _inputNumber);
             _prevInputNumber = _inputNumber;
             CheckOkButtonInteractable();
+            SetNumberText(NumericConfig.GetChineseNumber(_inputNumber));
             Messenger.Broadcast<int>(MessageConstant.MSG_NUMERIC_INPUT_OK, _inputNumber);
         }
 
-        private void OnDelButtonClicked()
+        private void OnClearButtonClicked()
         {
-            string singlePlace = "0";
-            if (_inputNumber < 10)
-                singlePlace = _inputNumber.ToString();
-            else
+            List<int> numbers = _inputNumberSet.ToList();
+            for (int i = 0; i < numbers.Count; i++)
             {
-                singlePlace = (_inputNumber % 10).ToString();
+                int number = numbers[i];
+                _allToggles[number].isOn = false;
             }
-            int singleValue = int.Parse(singlePlace);
-            _allToggles[singleValue].isOn = false;
+            _inputNumber = 0;
+            _prevInputNumber = 0;
+            SetNumberText("");
+            Messenger.Broadcast(MessageConstant.MSG_NUMERIC_INPUT_CLEAR);
         }
 
-  
         private void CheckOkButtonInteractable()
         {
-            if(_inputNumber >= 2 && _inputNumber <= kMaxNumberBit &&
-                _prevInputNumber != _inputNumber)
+            if (_inputNumber >= 2 && _inputNumber <= kMaxNumberBit &&
+                        _prevInputNumber != _inputNumber)
                 SetButtonInteractable(btnOk, true);
             else
                 SetButtonInteractable(btnOk, false);
@@ -189,32 +153,37 @@ namespace NumeralSystem
             button.interactable = interactable;
         }
 
-        private void OnNumericButtonClicked(int num)
+        private void CheckInput()
         {
-            CheckInput(num);
-            SetNumberText(NumericConfig.GetChineseNumber(_inputNumber));
-            CheckOkButtonInteractable();
-            Messenger.Broadcast<int>(MessageConstant.MSG_NUMERIC_INPUT_VALUE_CHANGED, _inputNumber);
-        }
-
-        private bool CheckInput(int num)
-        {
-            if (_inputNumber > 0)
+            List<int> numbers = _inputNumberSet.ToList();
+            if (numbers.Count == 1)
             {
-                int curInputNumber = _inputNumber * 10 + num;
-                if (curInputNumber <= kMaxNumberBit)
+                _inputNumber = numbers[0];
+            }
+            else if(numbers.Count == 2)
+            {
+                int value1 = numbers[0] * 10 + numbers[1];
+                int value2 = numbers[1] * 10 + numbers[0];
+                if(value1 > kMaxNumberBit && value2 > kMaxNumberBit)
                 {
-                    _inputNumber = curInputNumber;
-                    return true;
+                    _inputNumber = 0;
+                }
+                else
+                {
+                    if (value1 > kMaxNumberBit)
+                        _inputNumber = value2;
+                    else if (value2 > kMaxNumberBit)
+                        _inputNumber = value1;
+                    else
+                    {
+                        _inputNumber = value1 > value2 ? value1 : value2;
+                    }
                 }
             }
             else
             {
-                _inputNumber = num;
-                return true;
+                _inputNumber = 0;
             }
-            return false;
-
         }
     }
 }

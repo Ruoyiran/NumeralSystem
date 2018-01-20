@@ -6,15 +6,23 @@ using System.Collections;
 
 namespace NumeralSystem
 {
+    public enum GameState
+    {
+        Playing,
+        GameOver,
+    }
     public class NumeralEnvironmentManager : MonoBehaviour
     {
         public GameObject onePoleObj;   // 单根弹珠杆子GameObject对象，用于多位数进位创建新实例
         public Transform poleParentTransform; // 弹珠杆子窗口对象，用于存放子onePoleObj创建出来的对象
+        public static GameState State = GameState.GameOver;
+
         private int _numDigits = 5;    // 演示的位数
         private List<PinballManager> _allPinballManagers;
         private readonly List<string> pinballSpritePaths = new List<string>()
         { "Sprites/image6", "Sprites/image7", "Sprites/image8", "Sprites/image9", "Sprites/image10" };
         private bool _isPlayingAnimation = false; // 是否正在播放进位动画
+        private Coroutine _envResetCoroutine;
 
         private void Start()
         {
@@ -22,10 +30,23 @@ namespace NumeralSystem
             InitEnvironment();
         }
 
+        private void OnEnable()
+        {
+            Messenger.AddListener<int>(MessageConstant.MSG_NUMERIC_INPUT_OK, OnNumericInputOkHandler);
+            Messenger.AddListener(MessageConstant.MSG_NUMERIC_INPUT_CLEAR, OnNumericClearHandler);
+        }
+
+        private void OnDisable()
+        {
+            Messenger.RemoveListener<int>(MessageConstant.MSG_NUMERIC_INPUT_OK, OnNumericInputOkHandler);
+            Messenger.RemoveListener(MessageConstant.MSG_NUMERIC_INPUT_CLEAR, OnNumericClearHandler);
+        }
+
+
         private void Update()
         {
             PinballManager.IsDisableTouch = _isPlayingAnimation; // 正在播放进位动画时不能点击弹珠
-            if (_isPlayingAnimation)
+            if (_isPlayingAnimation || State != GameState.Playing)
                 return;
             bool isStatic = CheckAllPinballsStaticState(); // 所有弹珠都处于静止状态
             if (!isStatic) // 有正在下落的弹珠，等待下落结束
@@ -50,13 +71,34 @@ namespace NumeralSystem
                     yield return pinballMgr.DoCarry(_allPinballManagers[i - 1], i == 0);
                 }
             }
-            Logger.Print("Playing done.");
             _isPlayingAnimation = false;
-            if (_allPinballManagers.Count > 0 && _allPinballManagers[0].CurPinballCount > 0)
+            bool isGameOver = CheckGameOver();
+
+            if (isGameOver)
             {
                 Logger.Print("Game Over!");
-                Reset(NumericInputManager.Instance.PrevInputNumber);
+                OnNumericClearHandler();
+                StartCoroutine(Reset(NumericInputManager.Instance.PrevInputNumber));
+                Messenger.Broadcast(MessageConstant.MSG_NUMERIC_GAME_OVER);
             }
+        }
+
+        private bool CheckGameOver()
+        {
+            if (_allPinballManagers == null || _allPinballManagers.Count == 0)
+                return true;
+            if (_allPinballManagers[0].CurPinballCount > NumericInputManager.Instance.PrevInputNumber)
+                return true;
+            bool isGameOver = true;
+            for (int i = 0; i < _allPinballManagers.Count; i++)
+            {
+                if(_allPinballManagers[i].CurPinballCount < NumericInputManager.Instance.PrevInputNumber)
+                {
+                    isGameOver = false;
+                    break;
+                }
+            }
+            return isGameOver;
         }
 
         private void InitEnvironment()
@@ -80,18 +122,25 @@ namespace NumeralSystem
             }
         }
 
-        public void Reset(int number)
+        public IEnumerator Reset(int number)
         {
-            if (_allPinballManagers == null)
-                return;
-            for (int i = 0; i < _allPinballManagers.Count; i++)
+            _isPlayingAnimation = true;
+            for (int i = _allPinballManagers.Count-1; i >= 0 ; --i)
             {
-                bool showTopPinball = true;
-                if (i == 0)
-                    showTopPinball = false;
-                _allPinballManagers[i].Reset(number, showTopPinball);
+                _allPinballManagers[i].Reset(number, true);
+                yield return new WaitForSeconds(0.1f);
             }
             _isPlayingAnimation = false;
+            State = GameState.Playing;
+        }
+
+        private void HideAllPinballs()
+        {
+            for (int i = 0; i < _allPinballManagers.Count; ++i)
+            {
+                _allPinballManagers[i].SetTopPinballVisible(false);
+                _allPinballManagers[i].HideAllPinballs();
+            }
         }
 
         private bool CheckAllPinballsStaticState()
@@ -122,6 +171,28 @@ namespace NumeralSystem
                 }
             }
             return canCarry;
+        }
+
+        private void OnNumericInputOkHandler(int number)
+        {
+            StopEnvResetCoroutine();
+            _envResetCoroutine = StartCoroutine(Reset(number));
+        }
+
+        private void StopEnvResetCoroutine()
+        {
+            if(_envResetCoroutine != null)
+            {
+                StopCoroutine(_envResetCoroutine);
+                _envResetCoroutine = null;
+            }
+        }
+
+        private void OnNumericClearHandler()
+        {
+            State = GameState.GameOver;
+            StopEnvResetCoroutine();
+            HideAllPinballs();
         }
     }
 }
