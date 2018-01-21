@@ -8,6 +8,11 @@ namespace NumeralSystem
         public GameObject gameOverTipsPanel;
         private GameOverTips _gameOverTips;
 
+        private void Awake()
+        {
+            Screen.SetResolution(NumericConfig.kScreenWith, NumericConfig.kScreenHeight, false);
+        }
+
         private void Start()
         {
             _gameOverTips = GameObjectUtils.GetComponent<GameOverTips>(gameOverTipsPanel, true);

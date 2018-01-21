@@ -3,6 +3,8 @@ namespace NumeralSystem
 {
     public class NumericConfig
     {
+        public const int kScreenWith = 1280;
+        public const int kScreenHeight = 720;
 
         private static readonly Dictionary<int, string> ChineseNumbersDict = new Dictionary<int, string>()
         {
